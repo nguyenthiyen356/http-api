@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "quote-api.fullname" . }}
+  labels:
+    {{- include "quote-api.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "quote-api.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "quote-api.selectorLabels" . | nindent 8 }}
+    spec:
+      # ── Pod-level security ────────────────────────────────────────────────
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+
+          # ── Container security ──────────────────────────────────────────
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+
+          # Flask needs /tmp for temp files when rootfs is read-only
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+
+          # ── Probes ─────────────────────────────────────────────────────
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+
+          # ── Resources ──────────────────────────────────────────────────
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+
+      volumes:
+        - name: tmp
+          emptyDir: {}
+
+      # ── Node placement ───────────────────────────────────────────────────
+      # Hard rule: never schedule on GPU node (no toleration for that taint).
+      # Soft preference: spot nodes (weight 80) > on-demand (weight 60).
+      # Soft topology spread ensures 1 pod per node so on-demand always gets
+      # at least one replica; ScheduleAnyway keeps rescheduling flexible.
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: acme.io/node-type
+                    operator: NotIn
+                    values: ["gpu"]
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: {{ .Values.nodeAffinity.spotWeight }}
+              preference:
+                matchExpressions:
+                  - key: acme.io/capacity
+                    operator: In
+                    values: ["spot"]
+            - weight: {{ .Values.nodeAffinity.onDemandWeight }}
+              preference:
+                matchExpressions:
+                  - key: acme.io/capacity
+                    operator: In
+                    values: ["on-demand"]
+
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          # Soft: if a spot node is drained, remaining pods can reschedule
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              {{- include "quote-api.selectorLabels" . | nindent 14 }}

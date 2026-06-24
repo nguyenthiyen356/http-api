@@ -1,0 +1,51 @@
+replicaCount: 3
+
+image:
+  repository: ghcr.io/nguyenthiyen356/http-api
+  # tag is set by 20-deploy.sh to the current git SHA;
+  # "latest" here is only a local-dev fallback
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+ingress:
+  enabled: true
+  className: traefik
+  hosts:
+    - host: ""          # empty = match any hostname (works for localhost curl)
+      paths:
+        - path: /
+          pathType: Prefix
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+# ── HPA ───────────────────────────────────────────────────────────────────────
+hpa:
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 50
+
+# ── PodDisruptionBudget ───────────────────────────────────────────────────────
+pdb:
+  minAvailable: 2
+
+# ── Node placement ────────────────────────────────────────────────────────────
+# Weights: spot=80 (preferred for cost), on-demand=60 (always gets at least one
+# replica via topology spread). GPU node is hard-excluded (no toleration).
+# Spread is soft (ScheduleAnyway) so pods can reschedule during spot reclaims.
+nodeAffinity:
+  spotWeight: 80
+  onDemandWeight: 60

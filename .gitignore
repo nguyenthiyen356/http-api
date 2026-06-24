@@ -2,3 +2,4 @@ ci/
 monitoring/
 docker-compose.yml
 Middle_assignment.zip
+.kube/
