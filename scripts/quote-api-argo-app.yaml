@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: quote-api
+  namespace: argocd
+spec:
+  project: default
+  source:
+    # Root GitHub repository URL
+    repoURL: 'https://github.com/nguyenthiyen356/http-api/'
+    # Tracks the main branch
+    targetRevision: main
+    # Path inside the repository to the Helm chart folder
+    path: charts/quote-api
+    
+    # Injecting your custom GHCR Docker image into the Helm values
+    helm:
+      releaseName: quote-api
+      parameters:
+        - name: image.repository
+          value: "ghcr.io/nguyenthiyen356/http-api"
+        - name: image.tag
+          value: "f808ca6" # Replace with a specific tag if needed
+  destination:
+    name: in-cluster
+    namespace: quote-api-prod
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

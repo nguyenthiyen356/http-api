@@ -3,7 +3,7 @@ replicaCount: 3
 image:
   repository: ghcr.io/nguyenthiyen356/http-api
   pullPolicy: IfNotPresent
-  tag: "latest" # Overridden dynamically by 20-deploy.sh
+  tag: "f808ca6" # Overridden dynamically by 20-deploy.sh
 
 securityContext:
   runAsNonRoot: true
@@ -34,7 +34,7 @@ probes:
     initialDelaySeconds: 15
     periodSeconds: 20
   readiness:
-    path: /ready
+    path: /readyz
     port: 8080
     initialDelaySeconds: 10
     periodSeconds: 10
