@@ -40,6 +40,13 @@ spec:
                 operator: In
                 values:
                 - {{ .Values.placement.spotValue }}
+          - weight: 50
+            preference:
+              matchExpressions:
+              - key: {{ .Values.placement.nodeLabelKey }}
+                operator: In
+                values:
+                - {{ .Values.placement.onDemandValue }}
 
       topologySpreadConstraints:
         # Constraint A: Ensures that the 3 pods are spread across spot and on-demand nodes
