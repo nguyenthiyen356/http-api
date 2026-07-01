@@ -21,34 +21,19 @@ spec:
       # --- PLACEMENT POLICY ---
       affinity:
         nodeAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: {{ .Values.placement.spotWeight }}
-              preference:
-                matchExpressions:
-                  - key: {{ .Values.placement.nodeLabelKey }}
-                    operator: In
-                    values:
-                      - {{ .Values.placement.spotValue }}
-            - weight: {{ .Values.placement.onDemandWeight }}
-              preference:
-                matchExpressions:
-                  - key: {{ .Values.placement.nodeLabelKey }}
-                    operator: In
-                    values:
-                      - {{ .Values.placement.onDemandValue }}
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-            - weight: 100
-              podAffinityTerm:
-                topologyKey: kubernetes.io/hostname
-                labelSelector:
-                  matchLabels:
-                    app: {{ .Release.Name }}
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: {{ .Values.placement.nodeLabelKey }}
+                operator: In
+                values:
+                  - {{ .Values.placement.spotValue }}
+                  - {{ .Values.placement.onDemandValue }}
 
       topologySpreadConstraints:
         - maxSkew: 1
-          topologyKey: kubernetes.io/hostname
-          whenUnsatisfiable: ScheduleAnyway
+          topologyKey: acme.io/capacity
+          whenUnsatisfiable: DoNotSchedule
           labelSelector:
             matchLabels:
               app: {{ .Release.Name }}
