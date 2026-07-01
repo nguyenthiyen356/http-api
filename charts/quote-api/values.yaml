@@ -67,7 +67,3 @@ placement:
   nodeLabelKey: acme.io/capacity
   spotValue: spot
   onDemandValue: on-demand
-  spotWeight: 100
-  onDemandWeight: 90
-  topologySpreadMaxSkew: 1
-  topologySpreadWhenUnsatisfiable: DoNotSchedule

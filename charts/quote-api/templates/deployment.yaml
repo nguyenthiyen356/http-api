@@ -29,10 +29,19 @@ spec:
                 values:
                   - {{ .Values.placement.spotValue }}
                   - {{ .Values.placement.onDemandValue }}
+          
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: {{ .Values.placement.nodeLabelKey }}
+                operator: In
+                values:
+                - {{ .Values.placement.spotValue }}
 
       topologySpreadConstraints:
         - maxSkew: 1
-          topologyKey: acme.io/capacity
+          topologyKey: {{ .Values.placement.nodeLabelKey }}
           whenUnsatisfiable: DoNotSchedule
           labelSelector:
             matchLabels:
