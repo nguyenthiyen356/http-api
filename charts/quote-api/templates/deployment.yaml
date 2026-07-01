@@ -46,15 +46,15 @@ spec:
                     app: {{ .Release.Name }}
 
       topologySpreadConstraints:
-        - maxSkew: 1
+        - maxSkew: {{ .Values.placement.topologySpreadMaxSkew }}
           topologyKey: kubernetes.io/hostname
-          whenUnsatisfiable: ScheduleAnyway
+          whenUnsatisfiable: {{ .Values.placement.topologySpreadWhenUnsatisfiable }}
           labelSelector:
             matchLabels:
               app: {{ .Release.Name }}
-        - maxSkew: 1
+        - maxSkew: {{ .Values.placement.topologySpreadMaxSkew }}
           topologyKey: topology.kubernetes.io/zone
-          whenUnsatisfiable: ScheduleAnyway
+          whenUnsatisfiable: {{ .Values.placement.topologySpreadWhenUnsatisfiable }}
           labelSelector:
             matchLabels:
               app: {{ .Release.Name }}
