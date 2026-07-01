@@ -36,17 +36,25 @@ spec:
                     operator: In
                     values:
                       - {{ .Values.placement.onDemandValue }}
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app: {{ .Release.Name }}
 
       topologySpreadConstraints:
-        - maxSkew: {{ .Values.placement.topologySpreadMaxSkew }}
+        - maxSkew: 1
           topologyKey: kubernetes.io/hostname
-          whenUnsatisfiable: {{ .Values.placement.topologySpreadWhenUnsatisfiable }}
+          whenUnsatisfiable: ScheduleAnyway
           labelSelector:
             matchLabels:
               app: {{ .Release.Name }}
-        - maxSkew: {{ .Values.placement.topologySpreadMaxSkew }}
+        - maxSkew: 1
           topologyKey: topology.kubernetes.io/zone
-          whenUnsatisfiable: {{ .Values.placement.topologySpreadWhenUnsatisfiable }}
+          whenUnsatisfiable: ScheduleAnyway
           labelSelector:
             matchLabels:
               app: {{ .Release.Name }}
