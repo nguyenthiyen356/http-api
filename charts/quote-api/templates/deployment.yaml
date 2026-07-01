@@ -21,6 +21,7 @@ spec:
       # --- PLACEMENT POLICY ---
       affinity:
         nodeAffinity:
+          # 1. Isolate the deployment to only touch your designated nodes
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
             - matchExpressions:
@@ -30,6 +31,7 @@ spec:
                   - {{ .Values.placement.spotValue }}
                   - {{ .Values.placement.onDemandValue }}
           
+          # 2. Tie-breaker to ensure spot gets 2 pods and on-demand gets 1 pod
           preferredDuringSchedulingIgnoredDuringExecution:
           - weight: 100
             preference:
@@ -40,12 +42,21 @@ spec:
                 - {{ .Values.placement.spotValue }}
 
       topologySpreadConstraints:
+        # Constraint A: Ensures that the 3 pods are spread across spot and on-demand nodes
         - maxSkew: 1
           topologyKey: {{ .Values.placement.nodeLabelKey }}
           whenUnsatisfiable: DoNotSchedule
           labelSelector:
             matchLabels:
               app: {{ .Release.Name }}
+
+        # Constraint B: Spreads the 2 spot pods across separate machines if both are alive
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway # Soft rule: allows stacking if a spot node dies
+          labelSelector:
+            matchLabels:
+              app: quote-api
       # ------------------------
 
       containers:
