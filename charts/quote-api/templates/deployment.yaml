@@ -22,35 +22,31 @@ spec:
       affinity:
         nodeAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
-            # Heavily favor Spot instances to drop operational overhead expenses
-            - weight: 100
+            - weight: {{ .Values.placement.spotWeight }}
               preference:
                 matchExpressions:
-                  - key: capacity-type
+                  - key: {{ .Values.placement.nodeLabelKey }}
                     operator: In
                     values:
-                      - spot
-            # Keep On-Demand available with less weight to catch remaining spread replicas
-            - weight: 50
+                      - {{ .Values.placement.spotValue }}
+            - weight: {{ .Values.placement.onDemandWeight }}
               preference:
                 matchExpressions:
-                  - key: capacity-type
+                  - key: {{ .Values.placement.nodeLabelKey }}
                     operator: In
                     values:
-                      - on-demand
+                      - {{ .Values.placement.onDemandValue }}
 
       topologySpreadConstraints:
-        # Soft-spread across physical worker hosts to prevent single-point node failures
-        - maxSkew: 1
+        - maxSkew: {{ .Values.placement.topologySpreadMaxSkew }}
           topologyKey: kubernetes.io/hostname
-          whenUnsatisfiable: ScheduleAnyway
+          whenUnsatisfiable: {{ .Values.placement.topologySpreadWhenUnsatisfiable }}
           labelSelector:
             matchLabels:
               app: {{ .Release.Name }}
-        # Soft-spread across Availability Zones for structural high-availability disaster recovery
-        - maxSkew: 1
+        - maxSkew: {{ .Values.placement.topologySpreadMaxSkew }}
           topologyKey: topology.kubernetes.io/zone
-          whenUnsatisfiable: ScheduleAnyway
+          whenUnsatisfiable: {{ .Values.placement.topologySpreadWhenUnsatisfiable }}
           labelSelector:
             matchLabels:
               app: {{ .Release.Name }}

@@ -50,6 +50,10 @@ ingress:
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
   hosts:
+    - host: localhost
+      paths:
+        - path: /
+          pathType: Prefix
     - host: quote-api.local
       paths:
         - path: /
@@ -62,3 +66,12 @@ hpa:
 
 pdb:
   minAvailable: 2
+
+placement:
+  nodeLabelKey: acme.io/capacity
+  spotValue: spot
+  onDemandValue: on-demand
+  spotWeight: 100
+  onDemandWeight: 80
+  topologySpreadMaxSkew: 1
+  topologySpreadWhenUnsatisfiable: ScheduleAnyway
