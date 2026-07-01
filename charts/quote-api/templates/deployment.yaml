@@ -46,17 +46,18 @@ spec:
         - maxSkew: 1
           topologyKey: {{ .Values.placement.nodeLabelKey }}
           whenUnsatisfiable: DoNotSchedule
+          minDomains: 2
           labelSelector:
             matchLabels:
               app: {{ .Release.Name }}
 
         # Constraint B: Spreads the 2 spot pods across separate machines if both are alive
         - maxSkew: 1
-          topologyKey: kubernetes.io/hostname
+          topologyKey: {{ .Values.placement.hostnameLabelKey }}
           whenUnsatisfiable: ScheduleAnyway # Soft rule: allows stacking if a spot node dies
           labelSelector:
             matchLabels:
-              app: quote-api
+              app: {{ .Release.Name }}
       # ------------------------
 
       containers:
