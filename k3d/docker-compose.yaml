@@ -1,0 +1,20 @@
+services:
+  # Service 1: Creates the cluster and exits
+  k3d-setup:
+    image: ghcr.io/k3d-io/k3d:latest
+    container_name: k3d-cluster-creator
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - k3d-kubeconfig:/root/.kube
+    environment:
+      - K3D_FIX_MOUNTS=1
+    command: >
+      cluster create compose-cluster 
+      --servers 1 
+      --agents 4 
+      -p "8080:80@loadbalancer" 
+      --wait
+
+# Named volume to safely share the kubeconfig between containers
+volumes:
+  k3d-kubeconfig:

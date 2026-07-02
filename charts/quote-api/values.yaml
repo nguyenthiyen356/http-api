@@ -47,7 +47,7 @@ service:
 ingress:
   enabled: true
   className: "nginx"
-   annotations:
+  annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
   hosts:
     - host: quote-api.local
