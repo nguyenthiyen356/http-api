@@ -29,6 +29,34 @@ spec:
   policyTypes:
     - Ingress
     - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: smoke-client
+      ports:
+        - protocol: TCP
+          port: 80
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: web
+      ports:
+        - protocol: TCP
+          port: 80
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -49,26 +77,28 @@ spec:
     spec:
       containers:
         - name: nginx
-          image: nginx:1.25.99
+          image: nginx:1.25.5 # Changed to a valid image tag
           ports:
             - containerPort: 80
+              name: http
+              protocol: TCP
           resources:
             requests:
               cpu: 100m
-              memory: 16Gi
+              memory: 2Gi # Decreased memory request to 2Gi to fit within node capacity
             limits:
               cpu: 500m
-              memory: 16Gi
+              memory: 2Gi # Decreased memory limit to 2Gi to fit within node capacity
           livenessProbe:
             httpGet:
               path: /
-              port: 8080
+              port: 80 # Changed to port 80 to match the container port
             initialDelaySeconds: 5
             periodSeconds: 5
           readinessProbe:
             httpGet:
               path: /
-              port: 8080
+              port: 80 # Changed to port 80 to match the container port
             initialDelaySeconds: 3
             periodSeconds: 5
           volumeMounts:
@@ -77,20 +107,24 @@ spec:
       volumes:
         - name: html
           configMap:
-            name: web-conf
+            name: web-config # Fix the ConfigMap name to match the one defined above
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: web-svc
   namespace: troubleshoot
+  labels:
+    app: web
 spec:
   selector:
-    app: webapp
+    app: web # Fixed the selector to match the Deployment's label
   ports:
-    - protocol: TCP
+    - name: http
       port: 80
-      targetPort: 8080
+      targetPort: http
+      protocol: TCP
+  type: ClusterIP
 ---
 # Simulated AI inference workload. In production this runs on our GPU
 # nodepool. It must end up Running on the GPU-labeled node — without
@@ -113,7 +147,13 @@ spec:
         app: ai-inference
     spec:
       nodeSelector:
-        node-type: gpu
+        # node-type: gpu
+        acme.io/node-type: "gpu"  # Fixed to match the exact acme.io/ prefix
+      tolerations:
+      - key: "nvidia.com/gpu"     # Added to bypass the NoSchedule taint
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
       containers:
         - name: inference
           image: busybox:1.36

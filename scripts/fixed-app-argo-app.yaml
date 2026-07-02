@@ -10,7 +10,7 @@ spec:
     targetRevision: main
     path: troubleshoot
     directory:
-      include: broken-app.yaml
+      include: fixed-app.yaml
   destination:
     name: in-cluster
     namespace: troubleshoot
