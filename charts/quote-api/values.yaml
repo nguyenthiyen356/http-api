@@ -46,9 +46,12 @@ service:
 
 ingress:
   enabled: true
-  className: "nginx"
+  # className: "nginx"
+  # annotations:
+  #   nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  className: "traefik"
   annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    traefik.ingress.kubernetes.io/router.middlewares: <namespace>-<middleware-name>@kubernetescrd
   hosts:
     - host: quote-api.local
       paths:
